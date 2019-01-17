@@ -10,7 +10,7 @@ import UIKit
 import Firebase
 
 class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
-    
+
     //Outlets
     @IBOutlet weak var tableView: UITableView!
     
@@ -18,6 +18,7 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     private var posts: [Post] = []
     private var postsCollectionRef: CollectionReference!
     private var postListener: ListenerRegistration!
+    private var authHandle: AuthStateDidChangeListenerHandle!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,17 +33,38 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     override func viewWillAppear(_ animated: Bool) {
         ConfigureListener()
         
+        
+
+        authHandle = Auth.auth().addStateDidChangeListener({ (auth, user) in
+            if let user = user {
+                //Present alert
+
+//               let alertView = UIAlertController(title: "Success", message: "\(user.displayName!) has successfully logged in!", preferredStyle: .actionSheet)
+//                let action = UIAlertAction(title: "OK", style: .default)
+//                alertView.addAction(action)
+//                self.present(alertView, animated: true, completion: nil)
+            }
+            else {
+                let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                let loginVC = storyboard.instantiateViewController(withIdentifier: "loginVC")
+                self.present(loginVC, animated: true, completion: nil)
+            }
+        })
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        postListener.remove()
+        if postListener != nil {
+            postListener.remove()
+        }
     }
     
-    //General Functions
     
+    //General Functions
     func ConfigureListener(){
+        guard let user = Auth.auth().currentUser else { return }
         postListener = postsCollectionRef
-            .whereField(POST_TO_USERID, isEqualTo: "ethan")
+            .whereField(POST_TO_USERID, isEqualTo: user.uid)
             .order(by: POST_TIMESTAMP, descending: true)
             .addSnapshotListener
             {(snapshot, error) in
@@ -75,7 +97,6 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     }
     
     //Segue Methods
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("did select row at\(indexPath.row)")
         performSegue(withIdentifier: "detailsSegue", sender: self)
@@ -92,17 +113,24 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
             
             let formatter = DateFormatter()
             formatter.dateFormat = "MMM d, hh:mm"
-            let timestamp = formatter.string(from: post.timestamp.dateValue())
+            let timestamp = formatter.string(from: post.timestamp)
             detailsVC?.timestamp = timestamp
             
-            detailsVC?.fromUsername = "Nobody Important"
+            detailsVC?.fromUsername = post.fromUsername
             
         }
     }
     
-    
-    
-    
+    //Actions
+    @IBAction func signOutTapped(_ sender: Any) {
+        let firebaseAuth = Auth.auth()
+        do{
+            try firebaseAuth.signOut()
+        } catch let signOutError as NSError {
+            debugPrint("Error signing out: \(signOutError)")
+        }
+        
+    }
     
     
 }

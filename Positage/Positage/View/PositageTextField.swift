@@ -30,6 +30,10 @@ class PositageTextField: UITextField {
         backgroundColor = #colorLiteral(red: 0.9573150277, green: 0.957475245, blue: 0.9572940469, alpha: 1)
 
         
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: frame.height))
+        leftView = paddingView
+        leftViewMode = UITextField.ViewMode.always
+        
     }
 
 }

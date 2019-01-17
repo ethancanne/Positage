@@ -9,10 +9,13 @@
 import UIKit
 import Firebase
 
+
 class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    
     
     //Outlets
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var sortDataSegment: UISegmentedControl!
     
     //Variables
     var posts: [Post] = []
@@ -39,6 +42,55 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate 
         postListener.remove()
     }
     
+
+    //Segmented Control Tapped
+    @IBAction func sortingChanged(_ sender: Any) {
+        postListener.remove()
+        ConfigureListener()
+        
+    }
+    
+    
+    //General Functions
+    func ConfigureListener(){
+        if sortDataSegment.selectedSegmentIndex == 0{
+            postListener = postsCollectionRef
+                .whereField(POST_IS_COMMUNITY, isEqualTo: true)
+                .order(by: POST_TIMESTAMP, descending: true)
+                .addSnapshotListener
+                {(snapshot, error) in
+                    if let err = error {
+                        debugPrint("Error fetching docs: \(err)")
+                    }
+                    else{
+                        self.posts.removeAll()
+                        self.posts = Post.setPost(from: snapshot)
+                        self.tableView.reloadData()
+                    }
+                    
+            }
+        }
+        else {
+            postListener = postsCollectionRef
+                .whereField(POST_IS_COMMUNITY, isEqualTo: true)
+                .order(by: NUM_STAMPS, descending: true)
+                .addSnapshotListener
+                {(snapshot, error) in
+                    if let err = error {
+                        debugPrint("Error fetching docs: \(err)")
+                    }
+                    else{
+                        self.posts.removeAll()
+                        self.posts = Post.setPost(from: snapshot)
+                        self.tableView.reloadData()
+                    }
+                    
+            }
+        }
+        
+    }
+    
+    
     //Table View Protocol Stubs
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return posts.count
@@ -53,25 +105,5 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate 
             return UITableViewCell()
         }
     }
-
-    //General Functions
-    func ConfigureListener(){
-        postListener = postsCollectionRef
-            .whereField(POST_IS_COMMUNITY, isEqualTo: true)
-            .order(by: POST_TIMESTAMP, descending: true)
-            .addSnapshotListener
-            {(snapshot, error) in
-                if let err = error {
-                    debugPrint("Error fetching docs: \(err)")
-                }
-                else{
-                    self.posts.removeAll()
-                    self.posts = Post.setPost(from: snapshot)
-                    self.tableView.reloadData()
-                }
-                
-        }
-    }
-    
  
 }
