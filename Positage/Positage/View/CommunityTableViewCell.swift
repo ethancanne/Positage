@@ -11,6 +11,7 @@ import Firebase
 
 class CommunityTableViewCell: UITableViewCell {
 
+    @IBOutlet weak var communityView: UIView!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var titleLbl: UILabel!
     @IBOutlet weak var postDataLbl: UILabel!
@@ -18,16 +19,22 @@ class CommunityTableViewCell: UITableViewCell {
     @IBOutlet weak var numStampsLbl: UILabel!
     @IBOutlet weak var addStampImgBtn: UIImageView!
     @IBOutlet weak var addStampStackView: UIStackView!
+    @IBOutlet weak var communityViewTrailCnstr: NSLayoutConstraint!
+    @IBOutlet weak var promotedLbl: UILabel!
     
-    
+    //Variables
     private var post: Post!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        let tap = UITapGestureRecognizer(target: self, action: #selector(addStampBtnTapped))
-        addStampImgBtn.addGestureRecognizer(tap)
+        let addStampTap = UITapGestureRecognizer(target: self, action: #selector(addStampBtnTapped))
+    
+        addStampImgBtn.addGestureRecognizer(addStampTap)
         addStampImgBtn.isUserInteractionEnabled = true
         
+        communityView.layer.cornerRadius = 9
+        communityView.clipsToBounds = true
         
     }
 
@@ -36,9 +43,7 @@ class CommunityTableViewCell: UITableViewCell {
         print("addStampBtn has been Tapped")
         
         let firestore = Firestore.firestore()
-        //let oldNumStamps = post.numStamps
-        //firestore.document("\(POST_REF)/\(self.post.documentId)").updateData([POST_NUM_STAMPS : oldNumStamps + 1 ])
-        //firestore.document("\(USERS_REF)/\(userId)").updateData([USERS_NUM_STAMPS : oldNumStamps + 1 ])
+    
         
         if DataService.instance.currentUserNumStamps! >= 1{
             
@@ -92,10 +97,18 @@ class CommunityTableViewCell: UITableViewCell {
         titleLbl.text = post.title
         postDataLbl.text = post.data
         usernameLbl.text = "\(post.fromUsername)"
+        numStampsLbl.text = "\(String(post.numStamps)) Stamps"
+        
+        if post.isPromoted {
+            communityView.backgroundColor = #colorLiteral(red: 0.8861480355, green: 0.9316738248, blue: 0.9467076659, alpha: 1)
+            promotedLbl.isHidden = false
+        }
+        else{
+            communityView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        }
         
         if post.fromUserId != Auth.auth().currentUser?.uid {
             addStampImgBtn.isHidden = false
-            numStampsLbl.text = "\(String(post.numStamps)) Stamps"
         }
         else {
             addStampImgBtn.isHidden = true

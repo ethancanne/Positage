@@ -10,6 +10,12 @@ import UIKit
 @IBDesignable
 class PositageView: UIView {
 
+    @IBInspectable var cornerRadius: CGFloat = 0 {
+        didSet{
+            layer.cornerRadius = self.cornerRadius
+        }
+    }
+    
     override func prepareForInterfaceBuilder() {
         CustomizeView()
     }

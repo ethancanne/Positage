@@ -17,6 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
+        //Firebase
         FirebaseApp.configure()
 
         let db = Firestore.firestore()
@@ -24,6 +25,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         settings.areTimestampsInSnapshotsEnabled = true
         db.settings = settings
         
+        
+        //UI
+        let backBtnImg = UIImage(named: "BackButton")
+        let renderedImage = backBtnImg?.withRenderingMode(.alwaysOriginal)
+        UINavigationBar.appearance().backIndicatorImage = renderedImage
+        UINavigationBar.appearance().backIndicatorTransitionMaskImage = renderedImage
+        
+
+
+
         // Override point for customization after application launch.
         return true
     }
@@ -50,6 +61,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
 
+    
+    
 
 }
 

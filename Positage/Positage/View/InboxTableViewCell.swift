@@ -10,15 +10,16 @@ import UIKit
 import Firebase
 
 class InboxTableViewCell: UITableViewCell {
+    @IBOutlet weak var inboxView: UIView!
     @IBOutlet weak var titleLbl: UILabel!
     @IBOutlet weak var dateLbl: UILabel!
-    @IBOutlet weak var postDataLbl: UILabel!
     @IBOutlet weak var fromLbl: UILabel!
     @IBOutlet weak var stampsLbl: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        // Initialization code
+        inboxView.layer.cornerRadius = 9
+        inboxView.clipsToBounds = true
     }
 
     func ConfigureCell(post: Post){

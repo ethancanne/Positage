@@ -1,14 +1,14 @@
 //
-//  SettingsVC.swift
+//  CreateGroupVCViewController.swift
 //  Positage
 //
-//  Created by Ethan Cannelongo on 3/12/19.
+//  Created by Ethan Cannelongo on 5/1/19.
 //  Copyright © 2019 Ethan Cannelongo. All rights reserved.
 //
 
 import UIKit
 
-class SettingsVC: UIViewController {
+class CreateGroupVCViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()

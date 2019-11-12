@@ -12,9 +12,13 @@ import Firebase
 class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     //Outlets
+    @IBOutlet weak var menuArrowLbl: UILabel!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var menuStackView: UIStackView!
+    @IBOutlet weak var userBarTopCnstr: NSLayoutConstraint!
     
     //Variables
+    private var menuIsShown: Bool = false
     private var posts: [Post] = []
     private var postsCollectionRef: CollectionReference!
     private var postListener: ListenerRegistration!
@@ -28,6 +32,10 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         tableView.estimatedRowHeight = 108
         tableView.rowHeight = UITableView.automaticDimension
         
+        let menuTapped = UITapGestureRecognizer(target: self, action: #selector(showMenu))
+        menuStackView.isUserInteractionEnabled = true
+
+        menuStackView.addGestureRecognizer(menuTapped)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -57,15 +65,18 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         if postListener != nil {
             postListener.remove()
         }
+        if menuIsShown{
+            showMenu()
+        }
     }
     
     
     //General Functions
     func ConfigureListener(){
-        guard let user = Auth.auth().currentUser else { return }
+       guard let user = Auth.auth().currentUser else { return }
         postListener = postsCollectionRef
-            .whereField(POST_TO_USERID, isEqualTo: user.uid)
-            .order(by: POST_TIMESTAMP, descending: true)
+            .whereField(TO_USERID, isEqualTo: user.uid)
+            .order(by: TIMESTAMP, descending: true)
             .addSnapshotListener
             {(snapshot, error) in
                 if let err = error {
@@ -80,8 +91,67 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         }
     }
 
-    //TableView Protocol Stubs
     
+    //Segue Methods
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "detailsSegue" {
+            let detailsVC = segue.destination as? DetailsVC
+            let post = posts[(tableView.indexPathForSelectedRow?.row)!]
+
+            detailsVC?.post = post
+        }
+    }
+
+    
+    let menu = MenuView.createView()
+
+    @objc func showMenu(){
+        menuStackView.isUserInteractionEnabled = false
+
+        UIView.animate(withDuration: 0.2, animations: {
+            self.menuStackView.alpha = 0.5
+        })
+        { (worked) in
+            UIView.animate(withDuration: 0.2, animations: {
+                self.menuStackView.alpha = 1
+            })
+        }
+        let amountToMove: CGFloat = 5.0
+
+        if !menuIsShown{
+            menu.frame = CGRect(x: 0, y: self.menuStackView.frame.maxY + amountToMove, width: self.view.frame.width, height: 126)
+            userBarTopCnstr.constant += menu.frame.height - amountToMove
+            menu.alpha = 0
+            view.addSubview(menu)
+            view.sendSubviewToBack(menu)
+            menuIsShown = true
+
+            UIView.animate(withDuration: 0.7, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
+                self.view.layoutIfNeeded()
+                self.menu.alpha = 1
+                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat((Double.pi) / 2))
+            }, completion: {(worked) in
+                self.menuStackView.isUserInteractionEnabled = true
+            })
+        }
+        else{
+            userBarTopCnstr.constant -= menu.frame.height - amountToMove
+            self.menuIsShown = false
+
+
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
+                self.view.layoutIfNeeded()
+                self.menu.alpha = 0
+                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat(-(Double.pi) / 2))
+            }, completion: {(worked) in
+                self.menu.removeFromSuperview()
+                self.menuStackView.isUserInteractionEnabled = true
+            })
+        }
+    }
+    
+    
+    //TableView Protocol Stubs
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return posts.count
     }
@@ -96,40 +166,30 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    //Segue Methods
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("did select row at\(indexPath.row)")
         performSegue(withIdentifier: "detailsSegue", sender: self)
     }
     
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "detailsSegue" {
-            let detailsVC = segue.destination as? DetailsVC
-            let post = posts[(tableView.indexPathForSelectedRow?.row)!]
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        let postId = posts[indexPath.row].documentId
+        let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             
-            detailsVC?.postTitle = post.title
-            detailsVC?.postData = post.data
-            
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d, hh:mm"
-            let timestamp = formatter.string(from: post.timestamp)
-            detailsVC?.timestamp = timestamp
-            
-            detailsVC?.fromUsername = post.fromUsername
-            
+            let alert = UIAlertController(title: "Delete?", message: "Are you sure you want to delete this post? \(self.posts[indexPath.row].title)", preferredStyle: .actionSheet)
+            alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { (alert) in
+                self.posts.remove(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .left)
+                Firestore.firestore().collection(POST_REF).document(postId).delete(completion: { (error) in
+                    if let error = error {
+                        debugPrint("Error deleting document:\(error.localizedDescription)")
+                    }
+                })
+            }))
+            alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+
         }
-    }
-    
-    //Actions
-    @IBAction func signOutTapped(_ sender: Any) {
-        let firebaseAuth = Auth.auth()
-        do{
-            try firebaseAuth.signOut()
-        } catch let signOutError as NSError {
-            debugPrint("Error signing out: \(signOutError)")
-        }
-        
+        return [delete]
     }
     
     

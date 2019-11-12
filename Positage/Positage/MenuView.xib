@@ -12,17 +12,73 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
-        <view contentMode="scaleToFill" id="iN0-l3-epB">
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="MenuView" customModule="Positage" customModuleProvider="target">
             <rect key="frame" x="0.0" y="0.0" width="375" height="126"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="C9R-T4-8WX">
-                    <rect key="frame" x="24" y="48" width="56" height="67"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <state key="normal" title="Tracking"/>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="C9R-T4-8WX" customClass="PositageGeneralButton" customModule="Positage" customModuleProvider="target">
+                    <rect key="frame" x="30" y="21" width="84" height="84"/>
+                    <color key="backgroundColor" red="0.99173553719008267" green="0.98347107438016534" blue="1" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="84" id="1es-d4-YdC"/>
+                        <constraint firstAttribute="height" constant="84" id="aX2-op-txt"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                    <state key="normal" title="Tracking">
+                        <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+                            <real key="value" value="42"/>
+                        </userDefinedRuntimeAttribute>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <action selector="trackingBtnTapped:" destination="iN0-l3-epB" eventType="touchUpInside" id="GQS-qs-6tl"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="L2I-m4-10M" customClass="PositageGeneralButton" customModule="Positage" customModuleProvider="target">
+                    <rect key="frame" x="145.5" y="21" width="84" height="84"/>
+                    <color key="backgroundColor" red="0.99173553719008267" green="0.98347107438016534" blue="1" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="84" id="0qN-xv-D9J"/>
+                        <constraint firstAttribute="width" constant="84" id="Lgq-TR-3s1"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                    <state key="normal" title="Settings">
+                        <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+                            <real key="value" value="42"/>
+                        </userDefinedRuntimeAttribute>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <action selector="settingsBtnTapped:" destination="iN0-l3-epB" eventType="touchUpInside" id="Y5c-ZZ-gFR"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JOa-Ql-L2u">
+                    <rect key="frame" x="292" y="24" width="33" height="77"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="54"/>
+                    <state key="normal" title="+">
+                        <color key="titleColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </state>
+                    <connections>
+                        <action selector="addBtnTapped:" destination="iN0-l3-epB" eventType="touchUpInside" id="wtp-JA-Uyk"/>
+                    </connections>
                 </button>
             </subviews>
-            <color key="backgroundColor" red="0.72182351350784302" green="0.7290961742401123" blue="0.74117940664291382" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+            <color key="backgroundColor" white="1" alpha="0.70685763888888886" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstItem="JOa-Ql-L2u" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="24" id="7oM-i8-y3d"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="bottom" secondItem="C9R-T4-8WX" secondAttribute="bottom" constant="21" id="AmB-AN-hU3"/>
+                <constraint firstItem="C9R-T4-8WX" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" constant="30" id="PJp-lr-Jck"/>
+                <constraint firstItem="L2I-m4-10M" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" id="TEV-ee-qdd"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="bottom" secondItem="JOa-Ql-L2u" secondAttribute="bottom" constant="25" id="U9d-LD-Prr"/>
+                <constraint firstItem="L2I-m4-10M" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="aNt-KX-PuW"/>
+                <constraint firstItem="L2I-m4-10M" firstAttribute="centerY" secondItem="C9R-T4-8WX" secondAttribute="centerY" id="pf2-9K-X9c"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="JOa-Ql-L2u" secondAttribute="trailing" constant="50" id="qVE-A2-8bh"/>
+                <constraint firstItem="C9R-T4-8WX" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="21" id="rCf-F9-F15"/>
+            </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
             <point key="canvasLocation" x="-82.400000000000006" y="70.164917541229386"/>

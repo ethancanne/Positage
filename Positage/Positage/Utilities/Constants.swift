@@ -10,18 +10,29 @@ import Foundation
 
 //Post constants
 let POST_REF = "posts"
+let REPLIES_REF = "replies"
 let USERS_REF = "users"
 
-let POST_TITLE = "title"
-let POST_DATA = "data"
+
+let TITLE = "title"
+let DATA = "data"
 let NUM_STAMPS = "numStamps"
 let POST_IS_COMMUNITY = "isCommunity"
-let POST_TIMESTAMP = "timestamp"
-let POST_FROM_USERNAME = "fromUsername"
-let POST_FROM_USERID = "fromUserId"
-let POST_TO_USERID = "toUserId"
-
+let POST_ALLOWS_TRACKING = "allowsTracking"
+let POST_IS_PROMOTED = "isPromoted"
 let TIMESTAMP = "timestamp"
+let FROM_USERNAME = "fromUsername"
+let FROM_USERID = "fromUserId"
+let TO_USERID = "toUserId"
+let TO_USERNAME = "toUsername"
+let DID_VIEW = "didView"
+let MESSAGE = "message"
+
+
+let NUM_REPLIES = "numReplies"
+
+
+
 
 let USER_USERNAME = "username"
 
