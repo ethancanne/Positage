@@ -15,15 +15,25 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
     @IBOutlet weak var postDataTxt: PositageTextView!
     @IBOutlet weak var recipientsTxt: PositageTextField!
     @IBOutlet weak var postNameLbl: UILabel!
-    @IBOutlet weak var numStampsGivenLbl: UILabel!
+    
     @IBOutlet weak var recipientsTableView: UITableView!
+    @IBOutlet weak var dataTxtViewBtmCnstr: NSLayoutConstraint!
+    @IBOutlet weak var seeMoreBtn: UIButton!
     
     //Confirm View Outlets
     @IBOutlet var confirmView: UIView!
     @IBOutlet weak var trackSwitch: UISwitch!
-    @IBOutlet weak var promoteSwitch: UISwitch!
-    @IBOutlet weak var totalCostLbl: UILabel!
+   
     
+    //Pricing View Outlets
+    @IBOutlet var pricingView: UIView!
+    @IBOutlet weak var costBreakdownLbl: UILabel!
+     @IBOutlet weak var totalCostLbl: UILabel!
+    
+    
+    
+    //PopUpVariables
+    var backgroundView: UIView!
     
     
     //Variables
@@ -31,10 +41,11 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
     var postData: String = ""
     var postStampsGiven: Int = 0
     var postToUserId: String?
-    
+    var seeMoreIsOpened: Bool = false
     var isCommunity: Bool = false
     
     var cost: Int = 0
+    var sendSurcharge: Int = 0
     
     var users = [User]()
     
@@ -49,15 +60,24 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
         recipientsTableView.dataSource = self
         trackSwitch.addTarget(self, action: #selector(trackSwitchDidChange), for: .valueChanged)
         
+        self.view.bindToKeyboard()
+        
+        
+        //FOR POPUP
+        backgroundView = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
+        backgroundView.backgroundColor = #colorLiteral(red: 0.656727016, green: 0.6533910036, blue: 0.6593027115, alpha: 0.65703125)
+        backgroundView.alpha = 0
+        
+        //END FOR POPUP
+        backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissPopUpView)))
 
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         postNameLbl.text = postName
         postDataTxt.text = postData
-        numStampsGivenLbl.text = "Stamps Given: \(String(postStampsGiven))"
-//        sendBtn.setTitle("(\(cost) Stamps) Send", for: .normal)
-
+        totalCostLbl.text = String(cost)
         Firestore.firestore().collection(USERS_REF).getDocuments { (snapshot, error) in
             if let error = error{
                 debugPrint("Error updating recipient tableView:\(error.localizedDescription)")
@@ -68,44 +88,14 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
             }
         }
     }
+    override func viewWillDisappear(_ animated: Bool) {
+        dismissPopUpView()
+    }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         view.endEditing(true)
     }
     
-    @objc func trackSwitchDidChange (trackSwitch: UISwitch) {
-        if trackSwitch.isOn {
-            cost += 5
-        }
-        else{
-            cost -= 5
-        }
-        updateCostLbl()
-    }
-    
-    @objc func promoteSwitchDidChange (trackSwitch: UISwitch) {
-        if promoteSwitch.isOn {
-            cost += 7
-        }
-        else{
-            cost -= 7
-        }
-        updateCostLbl()
-    }
-    
-    func updateCostLbl(){
-        totalCostLbl.text = String(cost)
-    }
-    
-    @objc func textFieldDidChange(){
-        if recipientsTxt.text == ""{
-            users = []
-            recipientsTableView.reloadData()
-        }
-        else{
-            self.updateRecipientTableView()
-        }
-    }
     
     
     func updateRecipientTableView() {
@@ -115,17 +105,50 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
     
     
     
+    //ACTIONS
+    
+    @IBAction func seeMoreBtnPressed(_ sender: Any) {
+        if !seeMoreIsOpened {
+            UIView.animate(withDuration: 1.1, delay: 0.1, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseIn, animations: {
+                self.dataTxtViewBtmCnstr.constant -= 200
+                self.seeMoreBtn.transform = self.seeMoreBtn.transform.rotated(by: CGFloat((3 * Double.pi) / 2))
+                self.view.layoutIfNeeded()
+            }, completion: nil)
+            seeMoreIsOpened = true
+        }
+        else{
+            UIView.animate(withDuration: 1.1, delay: 0.1, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseIn, animations: {
+                self.dataTxtViewBtmCnstr.constant += 200
+                self.seeMoreBtn.transform = self.seeMoreBtn.transform.rotated(by: CGFloat(Double.pi / 2))
+                self.view.layoutIfNeeded()
+            }, completion: nil)
+            seeMoreIsOpened = false
+        }
+ 
+    }
+    
     
     @IBAction func nextPressed(_ sender: Any) {
-        //Show confirm View
-        let backgroundView = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height))
-        backgroundView.backgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 0.3002387153)
-        backgroundView.alpha = 0
-        view.addSubview(backgroundView)
-        confirmView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: 300)
-        view.addSubview(confirmView)
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 2, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
-            backgroundView.alpha = 1
+
+        updateCostLbl()
+        
+        guard let window = UIApplication.shared.keyWindow else {return}
+        
+        window.addSubview(backgroundView)
+        
+        //Create confirm View
+        self.confirmView.frame = CGRect(x: 0, y:  window.frame.height, width: window.frame.width, height: 300)
+        window.addSubview(self.confirmView)
+        
+        //Create the pricing Popup
+        pricingView.frame = CGRect(x: 0, y: window.frame.height, width: window.frame.width, height: 147)
+        pricingView.center.x = view.center.x
+        window.addSubview(pricingView)
+        
+        //Animate them all into view
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 2, initialSpringVelocity: 2, options: .curveEaseOut, animations: {
+            self.backgroundView.alpha = 1
+            self.pricingView.frame.origin.y -= (window.frame.height / 2)
             self.confirmView.frame.origin.y -= self.confirmView.frame.height
 
         }, completion: nil)
@@ -192,6 +215,7 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
                         }
                         else{
                             self.dismiss(animated: true, completion: nil)
+                            self.pricingView.removeFromSuperview()
                         }
                     }
                 }
@@ -216,10 +240,82 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
         
     }
     
+    @IBAction func giveStampBtnTapped(_ sender: Any) {
+        postStampsGiven += 1
+        cost += 1
+        updateCostLbl()
+    }
     
-    @IBAction func dismissConfirmView(_ sender: Any) {
+    
+    @IBAction func removeStampBtnTapped(_ sender: Any) {
+        if postStampsGiven != 0 {
+            postStampsGiven -= 1
+            cost -= 1
+            updateCostLbl()
+        }
+    }
+ 
+    //SELECTORS
+    
+    @objc func dismissPopUpView(){
+        guard let window = UIApplication.shared.keyWindow else {return}
+            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 2, initialSpringVelocity: 2, options: .curveEaseIn, animations: {
+                self.confirmView.frame.origin.y += self.confirmView.frame.height
+                self.pricingView.frame.origin.y = window.frame.height
+                self.backgroundView.alpha = 0
+            }, completion: { (worked) in
+                self.confirmView.removeFromSuperview()
+                self.pricingView.removeFromSuperview()
+                self.backgroundView.removeFromSuperview()
+            })
+
+    }
+    
+    
+    
+    
+    
+    @objc func trackSwitchDidChange (trackSwitch: UISwitch) {
+        if trackSwitch.isOn {
+            cost += 5
+        }
+        else{
+            cost -= 5
+        }
+        updateCostLbl()
+    }
+    
+    
+    @objc func textFieldDidChange(){
+        if recipientsTxt.text == ""{
+            users = []
+            recipientsTableView.reloadData()
+        }
+        else{
+            self.updateRecipientTableView()
+        }
+    }
+    
+    //END SELECTORS
+    
+    //GENERAL FUNCTIONS
+    func updateCostLbl(){
+ 
+        costBreakdownLbl.text = "Send Surcharge: \(cost)\n"
+        if trackSwitch.isOn == true {
+            costBreakdownLbl.text?.append("Post Tracked: 5\n")
+        }
+        
+        if postStampsGiven > 0 {
+            costBreakdownLbl.text?.append("Stamps Given: \(postStampsGiven)\n")
+        }
+        
+        
+        totalCostLbl.text = String(cost)
         
     }
+    //END GENERAL FUNCTIONS
+    
     
     //TableView Stubs
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

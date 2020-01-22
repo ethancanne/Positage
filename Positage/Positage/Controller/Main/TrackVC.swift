@@ -9,8 +9,10 @@
 import UIKit
 import Firebase
 
-class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
     //Outlets
+    @IBOutlet weak var tableViewTopCnstr: NSLayoutConstraint!
+    @IBOutlet weak var headerView: UIStackView!
     @IBOutlet weak var tableView: UITableView!
     
     //Variables
@@ -26,7 +28,9 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     }
     override func viewWillAppear(_ animated: Bool) {
+        AppLocation.currentUserLocation = CONVERSATIONS
         ConfigureListener()
+        print(Auth.auth().currentUser?.uid)
     }
     
     //General Functions
@@ -67,6 +71,9 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     @IBAction func backBtnTapped(_ sender: Any) {
         self.dismiss(animated: true, completion: nil)
     }
+    
+    
+    
     //Table View Stubs
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return posts.count
@@ -85,6 +92,33 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
             return UITableViewCell()
         }
         
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let actualPosition = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
+        let bottomConstant:CGFloat = 280
+        let topConstant:CGFloat = 130
+
+        print(scrollView.contentOffset)
+        if actualPosition.y < 0 && scrollView.contentOffset.y > 0{
+            if tableViewTopCnstr.constant == bottomConstant {
+                AppLocation.locationHidden = false
+                UIView.animate(withDuration: 0.3, animations:{
+                    self.headerView.alpha = 0
+                    self.tableViewTopCnstr.constant = topConstant
+                    self.view.layoutIfNeeded()
+                } )
+                
+            }
+            
+        }else if tableViewTopCnstr.constant == topConstant && scrollView.contentOffset.y < 0{
+            AppLocation.locationHidden = true
+            UIView.animate(withDuration: 0.3, animations:{
+                self.headerView.alpha = 1
+                self.tableViewTopCnstr.constant = bottomConstant
+                self.view.layoutIfNeeded()
+            } )
+        }
     }
     
     

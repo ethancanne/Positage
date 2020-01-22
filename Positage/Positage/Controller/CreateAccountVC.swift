@@ -18,9 +18,9 @@ class CreateAccountVC: UIViewController {
     @IBOutlet weak var passwordTxtLbl: UITextField!
     @IBOutlet weak var showPswdBtn: UIButton!
     
-    @IBOutlet weak var editBtn: PositageGeneralButton!
+    @IBOutlet weak var editBtn: PositageButton!
     
-    @IBOutlet weak var startBtn: PositageGeneralButton!
+    @IBOutlet weak var startBtn: PositageButton!
     
     //Variables
     var email: String = ""

@@ -10,6 +10,7 @@ import UIKit
 @IBDesignable
 class PositageTextView: UITextView {
 
+
     override func prepareForInterfaceBuilder() {
         CustomizeView()
     }
@@ -24,7 +25,7 @@ class PositageTextView: UITextView {
         layer.masksToBounds = false
         layer.cornerRadius = 0.7
         textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
-        backgroundColor = #colorLiteral(red: 0.9162353873, green: 0.9163889289, blue: 0.9162151217, alpha: 0.9222511574)
+        backgroundColor = #colorLiteral(red: 0.8478136063, green: 0.8430128098, blue: 0.8429611325, alpha: 1)
         
         
     }

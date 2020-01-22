@@ -9,13 +9,13 @@
 import UIKit
 import Firebase
 
-class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
 
     //Outlets
-    @IBOutlet weak var menuArrowLbl: UILabel!
     @IBOutlet weak var tableView: UITableView!
-    @IBOutlet weak var menuStackView: UIStackView!
-    @IBOutlet weak var userBarTopCnstr: NSLayoutConstraint!
+    @IBOutlet weak var tableViewTopCnstr: NSLayoutConstraint!
+    @IBOutlet weak var headerView: UIStackView!
+    
     
     //Variables
     private var menuIsShown: Bool = false
@@ -32,25 +32,30 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         tableView.estimatedRowHeight = 108
         tableView.rowHeight = UITableView.automaticDimension
         
-        let menuTapped = UITapGestureRecognizer(target: self, action: #selector(showMenu))
-        menuStackView.isUserInteractionEnabled = true
-
-        menuStackView.addGestureRecognizer(menuTapped)
+        
+        
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        //MENU
+        //Set Menu for entire application
+        guard let window = UIApplication.shared.keyWindow else { return }
+        let storyboard = UIStoryboard(name: "Menu", bundle: nil)
+        let menuVC = storyboard.instantiateViewController(withIdentifier: "MenuViewController")
+        
+        if let menuView = menuVC.view{
+            menuView.frame = CGRect(x: 0, y: 0, width: window.frame.width, height: window.frame.height)
+            window.addSubview(menuView)
+        }
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        AppLocation.currentUserLocation = INBOX
+        AppLocation.locationHidden = true
         ConfigureListener()
-        
-        
-
         authHandle = Auth.auth().addStateDidChangeListener({ (auth, user) in
             if let user = user {
-                //Present alert
-
-//               let alertView = UIAlertController(title: "Success", message: "\(user.displayName!) has successfully logged in!", preferredStyle: .actionSheet)
-//                let action = UIAlertAction(title: "OK", style: .default)
-//                alertView.addAction(action)
-//                self.present(alertView, animated: true, completion: nil)
             }
             else {
                 let storyboard = UIStoryboard(name: "Main", bundle: nil)
@@ -65,9 +70,9 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
         if postListener != nil {
             postListener.remove()
         }
-        if menuIsShown{
-            showMenu()
-        }
+//        if menuIsShown{
+//            showMenu()
+//        }
     }
     
     
@@ -99,54 +104,6 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
             let post = posts[(tableView.indexPathForSelectedRow?.row)!]
 
             detailsVC?.post = post
-        }
-    }
-
-    
-    let menu = MenuView.createView()
-
-    @objc func showMenu(){
-        menuStackView.isUserInteractionEnabled = false
-
-        UIView.animate(withDuration: 0.2, animations: {
-            self.menuStackView.alpha = 0.5
-        })
-        { (worked) in
-            UIView.animate(withDuration: 0.2, animations: {
-                self.menuStackView.alpha = 1
-            })
-        }
-        let amountToMove: CGFloat = 5.0
-
-        if !menuIsShown{
-            menu.frame = CGRect(x: 0, y: self.menuStackView.frame.maxY + amountToMove, width: self.view.frame.width, height: 126)
-            userBarTopCnstr.constant += menu.frame.height - amountToMove
-            menu.alpha = 0
-            view.addSubview(menu)
-            view.sendSubviewToBack(menu)
-            menuIsShown = true
-
-            UIView.animate(withDuration: 0.7, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
-                self.view.layoutIfNeeded()
-                self.menu.alpha = 1
-                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat((Double.pi) / 2))
-            }, completion: {(worked) in
-                self.menuStackView.isUserInteractionEnabled = true
-            })
-        }
-        else{
-            userBarTopCnstr.constant -= menu.frame.height - amountToMove
-            self.menuIsShown = false
-
-
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
-                self.view.layoutIfNeeded()
-                self.menu.alpha = 0
-                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat(-(Double.pi) / 2))
-            }, completion: {(worked) in
-                self.menu.removeFromSuperview()
-                self.menuStackView.isUserInteractionEnabled = true
-            })
         }
     }
     
@@ -193,4 +150,31 @@ class InboxVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
     }
     
     
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let actualPosition = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
+        let bottomConstant:CGFloat = 280
+        let topConstant:CGFloat = 130
+
+        print(scrollView.contentOffset)
+        if actualPosition.y < 0 && scrollView.contentOffset.y > 0{
+            if tableViewTopCnstr.constant == bottomConstant {
+                AppLocation.locationHidden = false
+                UIView.animate(withDuration: 0.3, animations:{
+                    self.headerView.alpha = 0
+                    self.tableViewTopCnstr.constant = topConstant
+                    self.view.layoutIfNeeded()
+                } )
+                
+            }
+            
+        }else if tableViewTopCnstr.constant == topConstant && scrollView.contentOffset.y < 0{
+            AppLocation.locationHidden = true
+            UIView.animate(withDuration: 0.3, animations:{
+                self.headerView.alpha = 1
+                self.tableViewTopCnstr.constant = bottomConstant
+                self.view.layoutIfNeeded()
+            } )
+        }
+    }
+
 }

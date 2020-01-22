@@ -14,8 +14,8 @@ class TrackTableViewCell: UITableViewCell {
     @IBOutlet weak var titleLbl: UILabel!
     @IBOutlet weak var timestampLbl: UILabel!
     @IBOutlet weak var toUsernameLbl: UILabel!
-    @IBOutlet weak var didViewImg: UIImageView!
     @IBOutlet weak var numRepliesLbl: UILabel!
+    
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -37,9 +37,12 @@ class TrackTableViewCell: UITableViewCell {
         let timestamp = formatter.string(from: post.timestamp)
         timestampLbl.text = timestamp
         
-        didViewImg.image = post.didView == true ? UIImage(named: "ViewedIcon") : UIImage(named: "NotViewedIcon")
-        
-        numRepliesLbl.text = "\(String(post.numReplies)) Replies"
+        if post.numReplies != 0 {
+            numRepliesLbl.text = "\(String(post.numReplies)) Replies"
+        }
+        else{
+            numRepliesLbl.text = "Not yet seen"
+        }
         
     }
 

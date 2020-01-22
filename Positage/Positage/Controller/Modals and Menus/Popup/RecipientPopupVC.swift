@@ -1,14 +1,14 @@
 //
-//  CreateGroupVCViewController.swift
+//  RecipientVC.swift
 //  Positage
 //
-//  Created by Ethan Cannelongo on 5/1/19.
-//  Copyright © 2019 Ethan Cannelongo. All rights reserved.
+//  Created by Ethan Cannelongo on 1/11/20.
+//  Copyright © 2020 Ethan Cannelongo. All rights reserved.
 //
 
 import UIKit
 
-class CreateGroupVCViewController: UIViewController {
+class RecipientPopupVC: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()

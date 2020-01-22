@@ -54,12 +54,7 @@ class TrackDetailsVC: UIViewController{
         configurePostListener()
         
         
-        if post.didView {
-            viewedImg.image = UIImage(named: "ViewedIcon")
-        }
-        else{
-            viewedImg.image = UIImage(named: "NotViewedIcon")
-        }
+        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -84,19 +79,19 @@ class TrackDetailsVC: UIViewController{
             else{
                 guard let document = snapshot?.data() else { return }
                 self.postDataTxt.text = document[DATA] as? String
-                self.titleLbl.text = document[TITLE] as? String
+                self.titleLbl.text = "Tracking: \(document[TITLE] as? String ?? "Post")"
 
-                if let didView = document[DID_VIEW] as? Bool {
-                    if didView {
-                        self.viewedImg.image = UIImage(named: "ViewedIcon")
-                    }
-                    else{
-                        self.viewedImg.image = UIImage(named: "NotViewedIcon")
-                    }
-                }
-                else {
-                    debugPrint("Error unwrapping DidView Object for this Post")
-                }
+//                if let didView = document[DID_VIEW] as? Bool {
+//                    if didView {
+//                        self.viewedImg.image = UIImage(named: "ViewedIcon")
+//                    }
+//                    else{
+//                        self.viewedImg.image = UIImage(named: "NotViewedIcon")
+//                    }
+//                }
+//                else {
+//                    debugPrint("Error unwrapping DidView Object for this Post")
+//                }
                 
             }
         })

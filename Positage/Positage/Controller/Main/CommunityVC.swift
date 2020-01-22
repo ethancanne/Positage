@@ -10,21 +10,19 @@ import UIKit
 import Firebase
 
 
-class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UIScrollViewDelegate {
     
     
     //Outlets
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var sortDataSegment: UISegmentedControl!
-    @IBOutlet weak var communityHeader: PositageHeaderView!
-    @IBOutlet weak var searchBar: UISearchBar!
-    @IBOutlet weak var menuStackView: UIStackView!
-    @IBOutlet weak var userBarTopCnstr: NSLayoutConstraint!
-    @IBOutlet weak var menuArrowLbl: UILabel!
+    @IBOutlet weak var headerView: UIView!
     
-  
+    @IBOutlet weak var tableViewTopCnstr: NSLayoutConstraint!
+    
     
     //Variables
+    var selectedGroup: Group!
     var posts: [Post] = []
     var filteredPosts: [Post] = []
     var isSearching = false
@@ -32,57 +30,47 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
     private var postListener: ListenerRegistration!
     private var menuIsShown: Bool = false;
     
+    //PopUpVariables
+    var chooseGroupVC: ChooseGroupVC!
+    var backgroundView: UIView!
+
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        postsCollectionRef = Firestore.firestore().collection(POST_REF)
-
+        postsCollectionRef = Firestore.firestore().collection("\(GROUPS_REF)/main/\(POST_REF)")
+        
         tableView.delegate = self
         tableView.dataSource = self
-        searchBar.delegate = self
-        searchBar.returnKeyType = UIReturnKeyType.done
-        searchBar.bindToKeyboard()
-        
-        tableView.estimatedRowHeight = 161
-        tableView.rowHeight = UITableView.automaticDimension
-        let menuTap = UITapGestureRecognizer(target: self, action: #selector(showMenu))
-        menuStackView.addGestureRecognizer(menuTap)
-        menuStackView.isUserInteractionEnabled = true
         
         //Segment UI
-        let attrSelected = NSDictionary(object: UIFont(name: "HelveticaNeue-Bold", size: 12.0)!, forKey: NSAttributedString.Key.font as NSCopying)
-        let attrNormal = NSDictionary(object: UIFont(name: "HelveticaNeue", size: 10.0)!, forKey: NSAttributedString.Key.font as NSCopying)
-        sortDataSegment.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.darkGray], for: .normal)
-        sortDataSegment.setTitleTextAttributes(attrNormal as? [NSAttributedString.Key : Any], for: .normal)
-        sortDataSegment.setTitleTextAttributes(attrSelected as? [NSAttributedString.Key : Any], for: .selected)
+        let attrSelected = [NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-Bold", size: 12), NSAttributedString.Key.foregroundColor: UIColor.darkGray]
+        let attrNormal = [NSAttributedString.Key.font: UIFont(name: "HelveticaNeue", size: 10), NSAttributedString.Key.foregroundColor: UIColor.gray]
         
+        sortDataSegment.tintColor = UIColor.clear
+
         
-        
-        
+        sortDataSegment.setTitleTextAttributes(attrSelected, for: .selected)
+        sortDataSegment.setTitleTextAttributes(attrNormal, for: .normal)
+
         self.sortDataSegment.layer.cornerRadius = 0
         self.sortDataSegment.layer.borderColor = UIColor.white.cgColor
         self.sortDataSegment.layer.borderWidth = 0
         self.sortDataSegment.layer.masksToBounds = true
         
-        
+        selectedGroup = Group(adminUsername: "main", adminUserId: "main", groupDesc: "main", groupName: "main", stampsToPost: 0, numPosts: 0, documentId: "main")
         
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        AppLocation.currentUserLocation = COMMUNITY
         ConfigureListener()
         sortDataSegment.layer.borderColor = UIColor.white.cgColor
         sortDataSegment.layer.cornerRadius = 0.0
         sortDataSegment.layer.borderWidth = 1
+        
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        let newFrame = communityHeader.frame
-        self.communityHeader.frame = CGRect(x: self.communityHeader.frame.minX - self.view.frame.width, y: self.communityHeader.frame.minY, width: self.communityHeader.frame.width, height: self.communityHeader.frame.height)
-
-        
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseOut, animations: {
-            self.communityHeader.frame = newFrame
-
-        }, completion: nil)
  
     }
     
@@ -90,9 +78,7 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
         if postListener != nil {
             postListener.remove()
         }
-        if menuIsShown{
-            showMenu()
-        }
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -113,6 +99,7 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
         if sortDataSegment.selectedSegmentIndex == 0{
             postListener = postsCollectionRef
                 .whereField(POST_IS_COMMUNITY, isEqualTo: true)
+                .order(by: POST_IS_PROMOTED, descending: true)
                 .order(by: TIMESTAMP, descending: true)
                 .addSnapshotListener
                 {(snapshot, error) in
@@ -130,8 +117,7 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
         else {
             postListener = postsCollectionRef
                 .whereField(POST_IS_COMMUNITY, isEqualTo: true)
-                .order(by: NUM_STAMPS, descending: true)
-                .order(by: POST_IS_PROMOTED, descending: true)
+                .order(by: NUM_SUPPORTS, descending: true)
                 .addSnapshotListener
                 {(snapshot, error) in
                     if let err = error {
@@ -149,53 +135,6 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
     }
     
     
-    var menu = MenuView.createView()
-    
-    @objc func showMenu(){
-        menuStackView.isUserInteractionEnabled = false
-
-        UIView.animate(withDuration: 0.2, animations: {
-            self.menuStackView.alpha = 0.5
-        })
-        { (worked) in
-            UIView.animate(withDuration: 0.2, animations: {
-                self.menuStackView.alpha = 1
-            })
-        }
-        let amountToMove: CGFloat = 5.0
-
-        if !menuIsShown{
-            menu.frame = CGRect(x: 0, y: self.menuStackView.frame.maxY + amountToMove, width: self.view.frame.width, height: 126)
-            userBarTopCnstr.constant += menu.frame.height - amountToMove
-            menu.alpha = 0
-            view.addSubview(menu)
-            view.sendSubviewToBack(menu)
-            menuIsShown = true
-
-            UIView.animate(withDuration: 0.7, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
-                self.view.layoutIfNeeded()
-                self.menu.alpha = 1
-                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat((6 * Double.pi) / 2))
-            }, completion: {(worked) in
-                self.menuStackView.isUserInteractionEnabled = true
-            })
-        }
-        else{
-            userBarTopCnstr.constant -= menu.frame.height - amountToMove
-            self.menuIsShown = false
-
-
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 2, options: .curveEaseInOut, animations: {
-                self.view.layoutIfNeeded()
-                self.menu.alpha = 0
-                self.menuArrowLbl.transform = self.menuArrowLbl.transform.rotated(by: CGFloat(-(6 * Double.pi) / 2))
-            }, completion: {(worked) in
-                self.menu.removeFromSuperview()
-                self.menuStackView.isUserInteractionEnabled = true
-            })
-        }
-    }
-    
     
     
     //Table View Protocol Stubs
@@ -211,10 +150,10 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "communityCell") as? CommunityTableViewCell{
             if isSearching {
-                cell.ConfigureCell(post: filteredPosts[indexPath.row])
+                cell.ConfigureCell(post: filteredPosts[indexPath.row], group: selectedGroup)
             }
             else {
-                cell.ConfigureCell(post: posts[indexPath.row])
+                cell.ConfigureCell(post: posts[indexPath.row], group: selectedGroup)
             }
             return cell
         }
@@ -228,6 +167,33 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
             print("\(self.posts[indexPath.row].title) has been reported.")
         }
         return [report]
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let actualPosition = scrollView.panGestureRecognizer.translation(in: scrollView.superview)
+        let bottomConstant:CGFloat = 314
+        let topConstant:CGFloat = 130
+
+        print(scrollView.contentOffset)
+        if actualPosition.y < 0 && scrollView.contentOffset.y > 0{
+            if tableViewTopCnstr.constant == bottomConstant {
+                AppLocation.locationHidden = false
+                UIView.animate(withDuration: 0.3, animations:{
+                    self.headerView.alpha = 0
+                    self.tableViewTopCnstr.constant = topConstant
+                    self.view.layoutIfNeeded()
+                } )
+                
+            }
+            
+        }else if tableViewTopCnstr.constant == topConstant && scrollView.contentOffset.y < 0{
+            AppLocation.locationHidden = true
+            UIView.animate(withDuration: 0.3, animations:{
+                self.headerView.alpha = 1
+                self.tableViewTopCnstr.constant = bottomConstant
+                self.view.layoutIfNeeded()
+            } )
+        }
     }
     
     //Search Bar Protocol Stubs
@@ -247,3 +213,19 @@ class CommunityVC: UIViewController, UITableViewDataSource, UITableViewDelegate,
         
     }
 }
+
+//extension CommunityVC: GroupDelegate {
+//    func didSelectGroup(group: Group) {
+//        guard let user = Auth.auth().currentUser else { return }
+//        groupNameLbl.text = group.groupName
+//        selectedGroup = Group(adminUsername: group.adminUsername, adminUserId: group.adminUserId, groupDesc: group.groupDesc, groupName: group.groupName, stampsToPost: group.stampsToPost, numPosts: group.numPosts, documentId: group.documentId)
+//
+//    dismissChooseGroupView()
+//
+//        postsCollectionRef = Firestore.firestore().collection("\(GROUPS_REF)/\(selectedGroup!.documentId)/\(POST_REF)")
+//
+//        postListener.remove()
+//        ConfigureListener()
+//
+//    }
+//}
