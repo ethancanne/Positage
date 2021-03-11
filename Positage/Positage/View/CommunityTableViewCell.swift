@@ -10,115 +10,114 @@ import UIKit
 import Firebase
 
 class CommunityTableViewCell: UITableViewCell {
-
-    @IBOutlet weak var communityView: UIView!
+    
+    
+    
+    @IBOutlet weak var cellView: UIView!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var titleLbl: UILabel!
-    @IBOutlet weak var postDataLbl: UILabel!
+    @IBOutlet weak var postMessageTextView: UITextView!
     @IBOutlet weak var timestampLbl: UILabel!
-    @IBOutlet weak var numStampsLbl: UILabel!
-    @IBOutlet weak var addStampImgBtn: UIImageView!
-    @IBOutlet weak var addStampStackView: UIStackView!
-    @IBOutlet weak var communityViewTrailCnstr: NSLayoutConstraint!
-    @IBOutlet weak var promotedLbl: UILabel!
+    @IBOutlet weak var numSupportLbl: UILabel!
+    @IBOutlet weak var numInvestorsLbl: UILabel!
+    @IBOutlet weak var stampsEarnedStckView: UIStackView!
+    @IBOutlet weak var stampsEarnedNum: UILabel!
+    
+    @IBOutlet weak var investBtn: UIButton!
+    @IBOutlet weak var giveSupportBtn: UIButton!
     
     //Variables
-    private var post: Post!
+    private var entry: Entry!
+    private var group: Group!
+    
+    var entryListener: ListenerRegistration!
+    
+    
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        
-        let addStampTap = UITapGestureRecognizer(target: self, action: #selector(addStampBtnTapped))
-    
-        addStampImgBtn.addGestureRecognizer(addStampTap)
-        addStampImgBtn.isUserInteractionEnabled = true
-        
-        communityView.layer.cornerRadius = 9
-        communityView.clipsToBounds = true
-        
     }
 
     
-    @objc func addStampBtnTapped(){
-        print("addStampBtn has been Tapped")
-        
-        let firestore = Firestore.firestore()
+    @IBAction func investBtnTapped(_ sender: Any) {
+        PopupVC.showInvestPopup(entry: entry, group: group, from: getCurrentViewController())
+    }
     
-        
-        if DataService.instance.currentUserNumStamps! >= 1{
-            
-            firestore.runTransaction({ (transaction, error) -> Any? in
-                let fromUserDocument: DocumentSnapshot
-                let fromUserId = self.post.fromUserId
-                guard let currentUser = Auth.auth().currentUser else { return nil }
-                
-                do {
-                    try fromUserDocument = transaction.getDocument(firestore.collection(USERS_REF).document(fromUserId))
-                }
-                catch let error as NSError {
-                    debugPrint("Error reading User Document:\(error.localizedDescription)")
+    @IBAction func giveSupportBtnTapped(_ sender: Any) {
+        if let user = DataService.currentUser {
+            if user.numSupportsRemaining >= 1{
+                DataService.database.runTransaction({ (transaction, err) -> Any? in
+                    
+                    transaction.updateData([NUM_SUPPORTS_REMAINING : FieldValue.increment(-1.0)], forDocument: DataService.database.collection(USERS_REF).document(user.userId))
+                    
+                    transaction.updateData([NUM_SUPPORTS: FieldValue.increment(1.0)], forDocument: DataService.database.collection(GROUPS_REF).document(self.group.documentId).collection(ENTRY_REF).document(self.entry.documentId))
+                    
+                    transaction.updateData([USERS_SUPPORTED: FieldValue.arrayUnion([user.userId])], forDocument: DataService.database.collection(GROUPS_REF).document(self.group.documentId).collection(ENTRY_REF).document(self.entry.documentId))
+                    
                     return nil
-                }
-                
-                guard let fromUserOldNumStamps = fromUserDocument.data()?[NUM_STAMPS] as? Int else { return nil }
-                guard let currentUserOldNumStamps = DataService.instance.currentUserNumStamps else { return nil }
-                
-                transaction.updateData([NUM_STAMPS : fromUserOldNumStamps + 1], forDocument: firestore.document("\(USERS_REF)/\(fromUserId)"))
-                
-                transaction.updateData([NUM_STAMPS : self.post.numStamps + 1], forDocument: firestore.document("\(POST_REF)/\(self.post.documentId)"))
-                
-                transaction.updateData([NUM_STAMPS :  currentUserOldNumStamps - 1], forDocument: firestore.document("\(USERS_REF)/\(currentUser.uid)"))
-                
-                
-                return nil
-            }) { (object, error) in
-                if let error = error {
-                    debugPrint("Error fetching User Document:\(error.localizedDescription)")
-                }
+                }, completion: { (object, err) in
+                    if let err = err {
+                        print("Error writing document: \(err)")
+                    } else {
+                        print("Document successfully written!")
+                    }
+                })
             }
         }
-        else {
-            print("User has an insignificant number of stamps:\(DataService.instance.currentUserNumStamps)")
-        }
-        
-        UIView.animate(withDuration: 0.5, animations: {
-            self.numStampsLbl.alpha = 0.5
-        })
-        { (worked) in
-            UIView.animate(withDuration: 0.3, animations: {
-                self.numStampsLbl.alpha = 1
-            })
-        }
-        
     }
     
-    func ConfigureCell(post: Post){
-        self.post = post
-        titleLbl.text = post.title
-        postDataLbl.text = post.data
-        usernameLbl.text = "\(post.fromUsername)"
-        numStampsLbl.text = "\(String(post.numStamps)) Stamps"
-        
-        if post.isPromoted {
-            communityView.backgroundColor = #colorLiteral(red: 0.8861480355, green: 0.9316738248, blue: 0.9467076659, alpha: 1)
-            promotedLbl.isHidden = false
-        }
-        else{
-            communityView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
-        }
-        
-        if post.fromUserId != Auth.auth().currentUser?.uid {
-            addStampImgBtn.isHidden = false
-        }
-        else {
-            addStampImgBtn.isHidden = true
-        }
-            
 
+    
+    
+    func ConfigureCell(entry: Entry, group: Group){
+        self.entry = entry
+        self.group = group
+        
+        //Set data to cell
+        titleLbl.text = entry.title
+        print(entry.message)
+        postMessageTextView.text = entry.message
+        usernameLbl.text = "\(entry.username)"
+        numSupportLbl.text = "\(entry.numSupports)"
+        numInvestorsLbl.text = "\(entry.usersInvested.count)"
+        
+//        //for Category
+//        switch entry.sorting {
+//        case PRIORITY_SORTING:
+//            cellView.backgroundColor = #colorLiteral(red: 0.7702729702, green: 0.8320232034, blue: 0.8880168796, alpha: 0.8514221557)
+//            break
+//        case NORMAL_SORTING:
+//            cellView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+//            break
+//        default: break
+//        }
+        
+        //User Specific settings
+        guard let user = Auth.auth().currentUser else { return }
+
+        let investment = entry.usersInvested[user.uid]
+        
+        let isInvested = (investment != nil)
+        let isSupported = (entry.usersSupported.contains(String(user.uid)))
+        let isCreator = (entry.userId == user.uid)
+        
+        
+        
+
+        giveSupportBtn.isHidden = (isInvested || isCreator) ? true : false //Only hide add support btn if user has invested or is the creator
+        investBtn.isHidden = (isInvested || isSupported || isCreator) ? true : false
+        stampsEarnedStckView.isHidden = (isInvested) ? false : true
+        stampsEarnedNum.text = String(investment?[1] ?? 0) 
+        
+        
+
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, hh:mm"
-        let timestamp = formatter.string(from: post.timestamp)
+        let timestamp = formatter.string(from: entry.timestamp)
         timestampLbl.text = timestamp
     }
 
+    
 }
+

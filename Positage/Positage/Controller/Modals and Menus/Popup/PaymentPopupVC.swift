@@ -7,9 +7,14 @@
 //
 
 
+protocol PaymentDelegate{
+    func didReturnFromPayment(isSuccessfull: Bool)
+}
+
 struct Price {
     let label: String
     let numStamps: Int
+
 }
 
 
@@ -23,7 +28,7 @@ class PricingCell: UITableViewCell {
         // Initialization code
     }
 
-    func ConfigureCell(price: Price){
+    func configureCell(price: Price){
         pricingLbl.text = price.label
         numStampsLbl.text = String(price.numStamps)
     }
@@ -33,11 +38,9 @@ class PricingCell: UITableViewCell {
 import UIKit
 class PaymentPopupVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    public var cost: Int!
-    public var communityPost: CommunityPost?
-    public var post: Post?
-    public var group: Group?
+    public var cost: Int = 0
     public var pricingItems: [Price]!
+    public var delegate: PaymentDelegate!
 
     
     @IBOutlet weak var totalCostNumLbl: UILabel!
@@ -45,19 +48,39 @@ class PaymentPopupVC: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.delegate = self
+        tableView.dataSource = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
-//        var totalPrice: Int
-//        for (i, price) in pricingItems.enumerated(){
-//            totalPrice += pricingItems![i].numStamps
-//        }
+        for price in pricingItems{
+            cost += price.numStamps
+        }
         totalCostNumLbl.text = String(cost)
-        
+        tableView.reloadData()
     }
     
     @IBAction func processTapped(_ sender: Any) {
-        
+        //Process payment and return to caller to finish transaction.
+        LoadingVC.showLoadingScreen(withMessage: "Completing Purchase")
+        let userStamps = DataService.currentUserNumStamps
+        print(userStamps)
+        if cost <= userStamps{
+            DataService.database.collection(USERS_REF).document(DataService.currentUser!.userId).updateData(
+            [NUM_STAMPS : (userStamps - cost)]) { (error) in
+                if error != nil{
+                    print("Error completing purchase: \(error.debugDescription)")
+                    self.delegate.didReturnFromPayment(isSuccessfull: false)
+                }
+            }
+            print("Purchase completed successfully.")
+            delegate.didReturnFromPayment(isSuccessfull: true)
+            return
+        } else{
+            delegate.didReturnFromPayment(isSuccessfull: false)
+        }
+
+
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -66,7 +89,7 @@ class PaymentPopupVC: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "pricingCell") as? PricingCell {
-            cell.ConfigureCell(price: pricingItems[indexPath.row])
+            cell.configureCell(price: pricingItems[indexPath.row])
             return cell
         }else{
             return UITableViewCell()

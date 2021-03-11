@@ -16,7 +16,7 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
     @IBOutlet weak var tableView: UITableView!
     
     //Variables
-    var posts: [Post] = []
+    var ongoingPosts: [OngoingPost] = []
     var postListener: ListenerRegistration!
     private var postsCollectionRef: CollectionReference!
     
@@ -28,9 +28,8 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
 
     }
     override func viewWillAppear(_ animated: Bool) {
-        AppLocation.currentUserLocation = CONVERSATIONS
+        AppLocation.currentUserLocation = "CONVERSATIONS"
         ConfigureListener()
-        print(Auth.auth().currentUser?.uid)
     }
     
     //General Functions
@@ -38,7 +37,6 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
         guard let user = Auth.auth().currentUser else { return }
         postListener = postsCollectionRef
             .whereField(FROM_USERID, isEqualTo: user.uid)
-            .whereField(POST_ALLOWS_TRACKING, isEqualTo: true)
             .order(by: TIMESTAMP, descending: true)
             .addSnapshotListener
             {(snapshot, error) in
@@ -46,8 +44,8 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
                     debugPrint("Error fetching docs: \(err)")
                 }
                 else{
-                    self.posts.removeAll()
-                    self.posts = Post.setPost(from: snapshot)
+                    self.ongoingPosts.removeAll()
+                    self.ongoingPosts = OngoingPost.set(from: snapshot)
                     self.tableView.reloadData()
                 }
         }
@@ -63,8 +61,8 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "toTrackDetails" {
             let trackDetailsVC = segue.destination as? TrackDetailsVC
-            let post = posts[(tableView.indexPathForSelectedRow?.row)!]
-            trackDetailsVC?.post = post
+            let ongoingPost = ongoingPosts[(tableView.indexPathForSelectedRow?.row)!]
+            trackDetailsVC?.ongoingPost = ongoingPost
         }
     }
     
@@ -76,7 +74,7 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
     
     //Table View Stubs
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return posts.count
+        return ongoingPosts.count
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -84,8 +82,8 @@ class TrackVC: UIViewController, UITableViewDataSource, UITableViewDelegate, UIS
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let cell = tableView.dequeueReusableCell(withIdentifier: "trackCell") as? TrackTableViewCell {
-            cell.ConfigureCell(post: posts[indexPath.row])
+        if let cell = tableView.dequeueReusableCell(withIdentifier: "ongoingPostCell") as? OngoingPostTableViewCell {
+            cell.ConfigureCell(ongoingPost: ongoingPosts[indexPath.row])
             return cell
         }
         else{

@@ -24,14 +24,25 @@ class Reply {
         self.userId = userId
     }
     
+    
+    func toDictionary() -> [String: Any]{
+        let messageDictionaryData: [String: Any] = [
+            USERNAME: username,
+            USERID: userId,
+            MESSAGE: message,
+            TIMESTAMP: Timestamp(date: Date()),
+        ]
+        return messageDictionaryData
+    }
+    
     class func setReply(from snapshot: QuerySnapshot?) -> [Reply] {
         var replies = [Reply]()
         guard let snap = snapshot else { return replies }
         for document in snap.documents{
-            let username = document.data()[FROM_USERNAME] as? String ?? "Unknown"
+            let username = document.data()[USERNAME] as? String ?? "Unknown"
             let serverTimestamp = document.data()[TIMESTAMP] as? Timestamp ?? Timestamp()
             let message = document.data()[MESSAGE] as? String ?? "null"
-            let userId = document.data()[FROM_USERID] as? String ?? "Unknown"
+            let userId = document.data()[USERID] as? String ?? "Unknown"
             print("A reply has been sent by \(username)")
             
             let timestamp: Date = serverTimestamp.dateValue()

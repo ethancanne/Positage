@@ -20,10 +20,11 @@ class PositageView: UIView {
     
     @IBInspectable var shadowColor: UIColor = #colorLiteral(red: 0.586538434, green: 0.6672740579, blue: 0.7448138595, alpha: 1)
 
-    @IBInspectable var shadowHeightPosition: Int = 0
+    @IBInspectable var shadowHeightPosition: CGFloat = 0
     
     @IBInspectable var shadowBlurRadius: Int = 0
     
+    @IBInspectable var maskedCorners: String? = nil
 
     
     override func prepareForInterfaceBuilder() {
@@ -44,12 +45,17 @@ class PositageView: UIView {
                 layer.masksToBounds = false
         }
         else if shadowType == 2 {
-            layer.shadowColor = UIColor.black.cgColor
+            layer.shadowColor = shadowColor.cgColor
             layer.shadowOpacity = 0.5
-            layer.shadowOffset = CGSize(width: 2, height: shadowHeightPosition)
+            layer.shadowOffset = CGSize(width: 0, height: shadowHeightPosition)
             layer.shadowRadius = CGFloat(shadowBlurRadius)
             layer.masksToBounds = false
         }
+        
+        if let corners = maskedCorners {
+            layer.maskedCorners = CACornerMask(rawValue: UInt(Int(String(corners))!))
+        }
+        
 }
     
 

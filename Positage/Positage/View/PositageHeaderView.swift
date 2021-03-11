@@ -20,7 +20,7 @@ class PositageHeaderView: UIView {
     }
    
     func customizeView(){
-        layer.cornerRadius = 35
+        layer.cornerRadius = 20
         layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
     }
 

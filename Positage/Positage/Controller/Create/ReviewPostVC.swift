@@ -83,7 +83,7 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
                 debugPrint("Error updating recipient tableView:\(error.localizedDescription)")
             }
             else {
-                self.allUsers = User.setUser(from: snapshot)
+                self.allUsers = User.set(from: snapshot)
                 
             }
         }
@@ -158,7 +158,7 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
     //ConfirmView Actions
     @IBAction func confirmPressed(_ sender: Any){
         guard let user = Auth.auth().currentUser else { return }
-        guard let currentUserNumStamps = DataService.instance.currentUserNumStamps else { return }
+        let currentUserNumStamps = DataService.currentUserNumStamps
         let isTrackOn = trackSwitch.isOn
         if postToUserId != nil {
             if currentUserNumStamps >= cost{
@@ -175,7 +175,7 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
                             return nil
                         }
                         
-                        guard let fromUserOldNumStamps = DataService.instance.currentUserNumStamps else { return nil }
+                        let fromUserOldNumStamps = DataService.currentUserNumStamps
                         guard let toUserOldNumStamps = toUserDocument.data()?[NUM_STAMPS] as? Int else { return nil }
                         
                         guard let toUsername = toUserDocument.data()?[USER_USERNAME] as? String else { return nil }
@@ -191,17 +191,14 @@ class ReviewPostVC: UIViewController, UITextFieldDelegate, UITableViewDataSource
                         
                         transaction.setData([
                             TITLE : self.postName,
-                            DATA : self.postData,
+                            MESSAGE : self.postData,
                             NUM_STAMPS : self.postStampsGiven,
-                            POST_IS_COMMUNITY : false,
-                            POST_ALLOWS_TRACKING: isTrackOn,
                             TIMESTAMP : FieldValue.serverTimestamp(),
                             FROM_USERNAME : user.displayName!,
                             FROM_USERID : user.uid,
                             TO_USERID : toUserId,
                             TO_USERNAME : toUsername,
-                            NUM_REPLIES : 0,
-                            DID_VIEW: false
+                            DID_READ: false
                             ]
                             , forDocument: postRef)
                         

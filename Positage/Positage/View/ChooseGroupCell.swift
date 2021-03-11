@@ -9,16 +9,26 @@
 import UIKit
 
 class ChooseGroupCell: UITableViewCell {
-
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Initialization code
+    
+    @IBOutlet weak var titleLbl: UILabel!
+    @IBOutlet weak var adminLbl: UILabel!
+    @IBOutlet weak var numPostsLbl: UILabel!
+    @IBOutlet weak var stampsReqLbl: UILabel!
+    var group: Group!
+    
+    func configureCell(group: Group){
+        self.group = group
+        titleLbl.text = group.title
+        adminLbl.text = group.adminUsername
+        numPostsLbl.text = "Posts: \(group.joinedUsers.count)"
+        stampsReqLbl.text = "Stamps Required: \(String(group.stampsToJoin))"
+        }
+    
+    @IBAction func showdescriptionriptionTapped(_ sender: Any) {
+        guard let window = UIApplication.shared.keyWindow else {return}
+        var alert = UIAlertController(title: "Group Description", message: group.description, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+        window.rootViewController?.present(alert, animated: true, completion: nil)
     }
-
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
-    }
-
+    
 }

@@ -9,12 +9,12 @@
 import UIKit
 import Firebase
 
-class CreateGroupVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
+class CreateGroupVC1: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
     
 
     //Outlets
     @IBOutlet weak var groupTitleTxt: UITextField!
-    @IBOutlet weak var groupDescriptionTxt: PositageTextView!
+    @IBOutlet weak var descriptionriptionTxt: PositageTextView!
     @IBOutlet weak var reqStampPickerView: UIPickerView!
     @IBOutlet weak var totalCostLbl: UILabel!
     
@@ -37,7 +37,7 @@ class CreateGroupVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSou
     
     @IBAction func confirmBtn(_ sender: Any) {
         guard let user = Auth.auth().currentUser else { return }
-        guard let currentUserNumStamps = DataService.instance.currentUserNumStamps else { return }
+        let currentUserNumStamps = DataService.currentUserNumStamps
         if currentUserNumStamps >= cost{
             
             //Update Stamps
@@ -48,10 +48,10 @@ class CreateGroupVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSou
             groupRef.addDocument(data: [
                 ADMIN_USERNAME : user.displayName!,
                 ADMIN_USERID : user.uid,
-                GROUPS_REF: self.groupDescriptionTxt.text,
+                GROUPS_REF: self.descriptionriptionTxt.text,
                 GROUP_NAME : self.groupTitleTxt.text,
-                GROUP_DESC : self.groupDescriptionTxt.text,
-                STAMPS_TO_POST : self.stampsToPost,
+                GROUP_DESC : self.descriptionriptionTxt.text,
+                STAMPS_TO_JOIN : self.stampsToPost,
                 NUM_POSTS: 0
             ]){ (err) in
                 if let err = err {

@@ -12,12 +12,12 @@ import Firebase
 class TrackDetailsVC: UIViewController{
     
     //Variables
-    var post: Post!
+    var ongoingPost: OngoingPost!
     var replies: [Reply] = []
     var replyListener: ListenerRegistration!
     var replyCollectionReference: CollectionReference!
-    var postListener: ListenerRegistration!
-    var postDocumentReference: DocumentReference!
+    var ongoingPostListener: ListenerRegistration!
+    var ongoingPostDocumentRef: DocumentReference!
     var seeMoreIsOpened: Bool = false
     
     
@@ -28,70 +28,50 @@ class TrackDetailsVC: UIViewController{
     @IBOutlet weak var timestampLbl: UILabel!
     @IBOutlet weak var toUsernameLbl: UILabel!
     @IBOutlet weak var postDataTxt: UITextView!
-    @IBOutlet weak var viewedImg: UIImageView!
     
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        postDocumentReference = Firestore.firestore().collection(POST_REF).document(post.documentId)
-        replyCollectionReference = Firestore.firestore().collection(POST_REF).document(post.documentId).collection(REPLIES_REF)
+        ongoingPostDocumentRef = Firestore.firestore().collection(ONGOING_POST_REF).document(ongoingPost.documentId)
+        replyCollectionReference = Firestore.firestore().collection("CONVERSATIONS").document(ongoingPost.documentId).collection(REPLIES_REF)
         
         view.bindToKeyboard()
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        titleLbl.text = post.title
-        toUsernameLbl.text = post.toUsername
+        titleLbl.text = ongoingPost.title
+        toUsernameLbl.text = ongoingPost.toUsername
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, hh:mm"
-        let timestamp = formatter.string(from: post.timestamp)
-        timestampLbl.text = timestamp
+        timestampLbl.text = "\(ongoingPost.timestamp)"
         
-        postDataTxt.text = post.data
+        postDataTxt.text = ongoingPost.message
         
         configurePostListener()
-        
-        
-        
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         if replyListener != nil {
             replyListener.remove()
         }
-        if postListener != nil {
-            postListener.remove()
+        if ongoingPostListener != nil {
+            ongoingPostListener.remove()
         }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         view.endEditing(true)
-        
     }
 
     func configurePostListener () {
-        postListener = postDocumentReference.addSnapshotListener({ (snapshot, error) in
+        ongoingPostListener = ongoingPostDocumentRef.addSnapshotListener({ (snapshot, error) in
             if let error = error {
                 debugPrint("Error catching replies:\(error.localizedDescription)")
             }
             else{
                 guard let document = snapshot?.data() else { return }
-                self.postDataTxt.text = document[DATA] as? String
+                self.postDataTxt.text = document[MESSAGE] as? String
                 self.titleLbl.text = "Tracking: \(document[TITLE] as? String ?? "Post")"
-
-//                if let didView = document[DID_VIEW] as? Bool {
-//                    if didView {
-//                        self.viewedImg.image = UIImage(named: "ViewedIcon")
-//                    }
-//                    else{
-//                        self.viewedImg.image = UIImage(named: "NotViewedIcon")
-//                    }
-//                }
-//                else {
-//                    debugPrint("Error unwrapping DidView Object for this Post")
-//                }
                 
             }
         })
@@ -119,20 +99,6 @@ class TrackDetailsVC: UIViewController{
         
 
     }
-    
-    
-    @IBAction func backTapped (_ sender: Any ) {
-        dismiss(animated: true, completion: nil)
-    }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "toRepliesVC"{
-            if let repliesVC = segue.destination as? RepliesVC {
-                repliesVC.post = post
-            }
-        }
-        
-    }
-        
+
     
 }

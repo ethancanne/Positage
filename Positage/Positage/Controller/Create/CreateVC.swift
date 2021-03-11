@@ -10,13 +10,16 @@
 import UIKit
 import Firebase
 
-let createConstants: [String] = ["Post", "Community Post", "Group"]
+let createConstants: [String] = ["Post", "Entry", "Group"]
 
 class CreateView: UIView{
     @IBOutlet weak var swipeChangeView: PositageView!
     @IBOutlet weak var createLbl: UILabel!
     @IBOutlet weak var createLblLeadCnstr: NSLayoutConstraint!
     @IBOutlet weak var swipeArrow: UILabel!
+    @IBOutlet weak var createPostView: UIView!
+    @IBOutlet weak var createEntryView: UIView!
+    @IBOutlet weak var createGroupView: UIView!
     
     
     var currentCreateSelected: String = createConstants[0] {
@@ -25,26 +28,51 @@ class CreateView: UIView{
         }
     }
     override func didMoveToSuperview() {
-        var panGestrRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(recognizer:)))
+        let panGestrRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(recognizer:)))
         swipeChangeView.addGestureRecognizer(panGestrRecognizer)
+//
     }
     
-    
+   
     func setNextCreate(){
-        
         if let createTxt = self.createLbl.text {
             var i = createConstants.firstIndex(of: createTxt) ?? 0
             if i == (createConstants.count - 1){
                 i = -1
             }
-            var nextCreate = createConstants[i+1]
+            let nextCreate = createConstants[i+1]
             self.createLbl.text = nextCreate
             currentCreateSelected = nextCreate
+            
+            UIView.animate(withDuration: 0.2, animations: {
+                // Go to Post
+                if self.currentCreateSelected == createConstants[0] {
+                    self.createPostView.alpha = 1
+                    self.createEntryView.alpha = 0
+                    self.createGroupView.alpha = 0
+                    self.backgroundColor = #colorLiteral(red: 0.9522058368, green: 0.9568576217, blue: 0.9654487967, alpha: 1)
+                }
+                //Go to Entry
+                if self.currentCreateSelected == createConstants[1] {
+                    self.createPostView.alpha = 0
+                    self.createEntryView.alpha = 1
+                    self.createGroupView.alpha = 0
+                    self.backgroundColor = #colorLiteral(red: 0.9006491303, green: 0.9096414447, blue: 0.9313831925, alpha: 1)
+                }
+                //Go to Group
+                if self.currentCreateSelected == createConstants[2] {
+                    self.createPostView.alpha = 0
+                    self.createEntryView.alpha = 0
+                    self.createGroupView.alpha = 1
+                    self.backgroundColor = #colorLiteral(red: 0.8535936475, green: 0.8625802398, blue: 0.8843277097, alpha: 1)
+                }
+            })
         }
     }
+   
     
     @objc func handlePan(recognizer: UIPanGestureRecognizer){
-        var normalLeadCnstrConst: CGFloat = 16
+        let normalLeadCnstrConst: CGFloat = 16
         switch recognizer.state{
         case .began:
             print("Pan Began")
@@ -68,6 +96,7 @@ class CreateView: UIView{
         case .ended:
             let velocity = recognizer.velocity(in: self).x
             print(velocity)
+            //Going fully from right to left
             if createLblLeadCnstr.constant <= -(self.createLbl.frame.width / 2) || velocity <= -250{
                 UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseOut, animations: {
                     self.createLblLeadCnstr.constant = -(self.createLbl.frame.width)
@@ -88,41 +117,32 @@ class CreateView: UIView{
                     }, completion: nil)
                 })
             } else {
+                //Going from right to left, but not all the way
                 UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 2, options: .curveEaseOut, animations: {
                     self.createLblLeadCnstr.constant = normalLeadCnstrConst
                     self.createLbl.alpha = 1
                     self.swipeArrow.alpha = 1
                     self.layoutIfNeeded()
                 }, completion: nil)
+                self.swipeArrow.textAlignment = .center
+
             }
             
             
         default:
-            print("Pan Error")
+            print("Error")
         }
         
         
     }
-    func getCurrentViewController() -> UIViewController? {
-        
-        if let rootController = UIApplication.shared.keyWindow?.rootViewController {
-            var currentController: UIViewController! = rootController
-            while( currentController.presentedViewController != nil ) {
-                currentController = currentController.presentedViewController
-            }
-            return currentController
-        }
-        return nil
-        
-    }
+   
+    
     
     @IBAction func nextBtnTapped(_ sender: Any) {
-        let storyboard = UIStoryboard(name: "Popup", bundle: nil)
-        let popupVC = storyboard.instantiateViewController(withIdentifier: "popupVC")
+        let popupVC = instantiateViewController(fromStoryboard: "Popup", withIdentifier: "popupVC") as! PopupVC
+        popupVC.setupPopup(withViewController: instantiateViewController(fromStoryboard: "Popup", withIdentifier: "paymentVC"))
         popupVC.modalPresentationStyle = .overFullScreen
         getCurrentViewController()?.present(popupVC, animated: false)
-        print("hello")
-        
         
     }
     
@@ -521,7 +541,7 @@ class CreateVC: UIViewController, UITextViewDelegate{
     //
     //        }
     //        if selectedGroup != nil {
-    //            costBreakdownPopupLbl.text?.append("\(selectedGroup.groupName): \(selectedGroup.stampsToPost)\n")
+    //            costBreakdownPopupLbl.text?.append("\(selectedGroup.title): \(selectedGroup.stampsToPost)\n")
     //        }
     //
     //

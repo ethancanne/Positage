@@ -28,7 +28,6 @@ class PositageButton: UIButton {
     }
     
     func customizeView(){
-        layer.cornerRadius = 8
         if addShadow{
             layer.shadowColor = UIColor.black.cgColor
             layer.shadowOpacity = 0.3

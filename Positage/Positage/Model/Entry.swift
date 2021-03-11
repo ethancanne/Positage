@@ -9,58 +9,65 @@
 import Foundation
 import Firebase
 
-class Entry{
+class Entry : Creatable{
     
-    private(set) public var title: String
+    
+    
     private(set) public var message: String
     private(set) public var sorting: String
     
     private(set) public var numSupports: Int
+
     private(set) public var usersSupported: [String]
-    private(set) public var supportGoal: Int
-    private(set) public var customSupportMsg: String
+    private(set) public var usersInvested: [String : [Int]]
     
-    private(set) public var timestamp: Date
+    private(set) public var investmentThankYouMsg: String
+    
+    private(set) public var investmentCharge: Int
+    
     private(set) public var username: String
     private(set) public var userId: String
-    
-    private(set) public var documentId: String
-    
-    func setSupportGoal(supportGoal: String){
-        self.supportGoal = Int(supportGoal)!
-    }
-    
-    func setSorting(sorting: String){
-        if sorting == NORMAL_SORTING || sorting == PRIORITY_SORTING{
-            self.sorting = sorting
-        }
-    }
-    
-    func setSupportMessage(message: String){
-        self.customSupportMsg = message
-    }
-    init(title: String, message: String, sorting: String, numSupports: Int, usersSupported: [String], supportGoal: Int, customSupportMsg: String, username: String, userId: String, timestamp: Date, documentId: String) {
         
-        self.title = title
+    
+    init(title: String, message: String, sorting: String, numSupports: Int, usersSupported: [String], usersInvested: [String : [Int]], investmentThankYouMsg: String, investmentCharge: Int, username: String, userId: String, timestamp: Date, documentId: String) {
         self.message = message
         self.sorting = sorting
-        
         self.numSupports = numSupports
         self.usersSupported = usersSupported
-        self.supportGoal = supportGoal
-        self.customSupportMsg = customSupportMsg
-        
+        self.usersInvested = usersInvested
+        self.investmentThankYouMsg = investmentThankYouMsg
+        self.investmentCharge = investmentCharge
         self.username = username
         self.userId = userId
         
-        self.timestamp = timestamp
-        self.documentId = documentId
-        
+        super.init(title: title, timestamp: timestamp, documentId: documentId)
     }
     
-    class func setCommunityPost(from snapshot: QuerySnapshot?) -> [Entry] {
-        var posts = [Entry]()
-        guard let snap = snapshot else { return posts }
+    func toDictionary() -> [String: Any]{
+        let postDictionaryData: [String: Any] = [
+            TITLE: title,
+            MESSAGE: message,
+            SORTING: sorting,
+
+            NUM_SUPPORTS: numSupports,
+            USERS_SUPPORTED: usersSupported,
+            USERS_INVESTED: usersInvested,
+
+            
+            INVESTMENT_CHARGE: investmentCharge,
+            INVESTMENT_THANK_YOU_MSG: investmentThankYouMsg,
+
+            USERNAME: username,
+            USERID: userId,
+            TIMESTAMP: timestamp,
+        ]
+        return postDictionaryData
+    }
+    
+    
+    class func set(from snapshot: QuerySnapshot?) -> [Entry] {
+        var entries = [Entry]()
+        guard let snap = snapshot else { return entries }
         for document in snap.documents{
             let data = document.data()
             
@@ -68,10 +75,15 @@ class Entry{
             let message = data[MESSAGE] as? String ?? "Unknown"
             let sorting = data[SORTING] as? String ?? ""
             
+            let usersInvested = data[USERS_INVESTED] as? [String : [Int]] ?? [String : [Int]]()
+            
             let numSupports = data[NUM_SUPPORTS] as? Int ?? 0
-            let usersSupported = data[USERS_SUPPORTED] as? [String] ?? [String]()
-            let supportGoal = data[SUPPORT_GOAL] as? Int ?? 0
-            let customSupportMsg = data[CUSTOM_SUPPORT_MESSAGE] as? String ?? "Thank you"
+            
+            let usersSuppored = data[USERS_SUPPORTED] as? [String] ?? [String]()
+            
+            let investmentThankYouMsg = data[INVESTMENT_THANK_YOU_MSG] as? String ?? "Thank you"
+            
+            let investmentCharge = data[INVESTMENT_CHARGE] as? Int ?? 0
             
             let username = data[USERNAME] as? String ?? "Anonymous"
             let userId = data[USERID] as? String ?? ""
@@ -80,11 +92,11 @@ class Entry{
             let documentId = document.documentID
             
             let dateTimestamp = timestamp.dateValue()
-            let newPost = Entry(title: title, message: message, sorting: sorting, numSupports: numSupports, usersSupported: usersSupported, supportGoal: supportGoal, customSupportMsg: customSupportMsg, username: username, userId: userId, timestamp: dateTimestamp, documentId: documentId)
+            let newEntry = Entry(title: title, message: message, sorting: sorting, numSupports: numSupports, usersSupported: usersSuppored, usersInvested: usersInvested, investmentThankYouMsg: investmentThankYouMsg, investmentCharge: investmentCharge, username: username, userId: userId, timestamp: dateTimestamp, documentId: documentId)
             
-            posts.append(newPost)
+            entries.append(newEntry)
             
         }
-        return posts
+        return entries
     }
 }
